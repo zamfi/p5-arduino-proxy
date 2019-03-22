@@ -13,7 +13,8 @@ class ControlComponent extends React.Component {
   }
   
   handleMessage(message) {
-    // do something here?
+    console.log("Message:", message.data);
+    // do something with this data?
   }
   
   sendMessage(message) {

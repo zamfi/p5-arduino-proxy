@@ -35,10 +35,12 @@ let server = require('http').createServer(async (req, res) => {
       res.writeHead(500, {'Content-Type': 'text/html'});
       res.end("Failed to load something...try again later?");
     }
+    break;
   default:
     console.log("unknown request", path);
     res.writeHead(404, {'Content-Type': 'text/html'});
     res.end("Couldn't find your URL...");
+    break;
   }
 });
 server.listen(PORT);

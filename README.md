@@ -8,6 +8,7 @@ To run the boxbot-controller, first fork this repository, and then clone your co
 Then, `cd` into the directory and install the dependencies:
 
 `cd boxbot-controller`
+
 `npm install`
 
 Lastly, run the server with:

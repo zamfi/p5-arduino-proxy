@@ -17,7 +17,7 @@ void serialEvent() {
     // go left
   } else if (input == "right") {
     // go right
-  } else if (input == "backwards") {
+  } else if (input == "reverse") {
     // go back
   }
 }

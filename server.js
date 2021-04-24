@@ -26,7 +26,8 @@ let server = require('http').createServer(async (req, res) => {
   // then, based on the file path:
   switch (path) {
   case '/': 
-  case '/client.js': 
+  case '/sketch.js':
+  case '/style.css':
   case '/index.html':
     // if it's one of these known files above, then...
     
@@ -85,11 +86,12 @@ server.listen(PORT);
 let allConnections = new Set();
 
 // connect to the Arduino using a "serial port"
+// TODO(you): update this to match your Arduino's serial port!
 let serial = new SerialPort('/dev/ttyACM0', {baudRate: 115200});
 
 // if there's an error, quit the server.
 serial.on('error', () => {
-  console.log("Failed to connect to Arduino...please try again.");
+  console.error("Failed to connect to Arduino...check port name & try again?");
   process.exit();
 });
 

@@ -9,6 +9,8 @@ Then, `cd` into the directory and install the dependencies:
 
 `cd boxbot-controller`
 
+You'll need to have `node` and `npm` installed from [nodejs.org](https://nodejs.org/); then:
+
 `npm install`
 
 Lastly, run the server with:

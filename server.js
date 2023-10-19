@@ -2,7 +2,9 @@ const fs = require('fs');
 const mime = require('mime');
 const url = require('url');
 const util = require('util');
-const SerialPort = require("serialport");
+const { SerialPort } = require("serialport");
+const { ReadlineParser } = require('@serialport/parser-readline');
+const { userInfo } = require('os');
 const WebSocketServer = require('websocket').server;
 
 
@@ -86,30 +88,67 @@ server.listen(PORT);
 let allConnections = new Set();
 
 // connect to the Arduino using a "serial port"
-// TODO(you): update this to match your Arduino's serial port!
-let serial = new SerialPort('/dev/ttyACM0', {baudRate: 115200});
-
-// if there's an error, quit the server.
-serial.on('error', () => {
-  console.error("Failed to connect to Arduino...check port name & try again?");
-  process.exit();
-});
-
-// "parse" the data from the serial port using a "readline" parser
-// that separate each message by line.
-let parser = new SerialPort.parsers.Readline();
-
-// send all data from the serial port into the parser.
-serial.pipe(parser);
-
-// when there's data from the parser, print it and send it to
-// all connected browsers
-parser.on('data', data => {
-  console.log("->", data);
-  for (let connection of allConnections) {
-    connection.send(data);
+const isArduinoFilter = (info) => {
+  if (info?.manufacturer?.startsWith('Arduino')) {
+    return true;
   }
-});
+};
+
+let globalSerial;
+
+async function setupSerial() {
+  let ports = await SerialPort.list();
+  // console.log("Found ports:", ports);
+
+  // check for any obvious Arduinos
+  let arduinoPorts = ports.filter(isArduinoFilter);
+  let usedInfo;
+  if (arduinoPorts.length === 1) {
+    usedInfo = arduinoPorts[0];
+  } else {
+    // ask user to choose from list of ports.
+    console.log("Found the following devices:");
+    for (let i = 0; i < ports.length; i++) {
+      console.log(`${i+1}: ${ports[i].manufacturer || "(unknown manufacturer)"} at ${ports[i].path}`);
+    }
+    process.stdout.write(`Please choose port (1-${ports.length}): `);
+    let choice = await new Promise((resolve, reject) => {
+      process.stdin.once('data', data => {
+        let index = parseInt(data.toString());
+        if (index > 0 && index <= ports.length) {
+          resolve(index-1);
+        } else {
+          reject();
+        }
+      });
+    });
+    usedInfo = ports[choice];
+  }
+  console.log("Using port", usedInfo.path, "for device", ...(usedInfo.manufacturer ? ["made by", usedInfo.manufacturer] : []));
+  globalSerial = new SerialPort({ path: usedInfo.path, baudRate: 115200 });
+
+  // if there's an error, quit the server.
+  globalSerial.on('error', () => {
+    console.error("Failed to connect to Arduino...check port name & try again?");
+    process.exit();
+  });
+
+  // "parse" the data from the serial port using a "readline" parser
+  // that separate each message by line.
+  let parser = new ReadlineParser();
+
+  // send all data from the serial port into the parser.
+  globalSerial.pipe(parser);
+
+  // when there's data from the parser, print it and send it to
+  // all connected browsers
+  parser.on('data', data => {
+    console.log("->", data);
+    for (let connection of allConnections) {
+      connection.send(data);
+    }
+  });
+}
 
 /************************
  *                      *
@@ -125,6 +164,7 @@ let wsServer = new WebSocketServer({
 // when there's a new websocket coming in...
 wsServer.on('request', request => {
   // accept the connection
+  console.log("New connection from", request.origin);
   let connection = request.accept(null, request.origin);
   
   // add it to the set of all connections
@@ -141,9 +181,9 @@ wsServer.on('request', request => {
     let messageString = message.utf8Data;
     
     // if we're connected to the serial port, send the message to the Arduino!
-    if (serial) {
+    if (globalSerial) {
       console.log("<-", messageString);
-      serial.write(messageString+'\n');
+      globalSerial.write(messageString+'\n');
     }
   });
   
@@ -153,5 +193,7 @@ wsServer.on('request', request => {
   });
 });
 
-// all ready! print the port we're listening on to make connecting easier.
-console.log("Listening on port", PORT);
+setupSerial().then(() => {
+  // all ready! print the port we're listening on to make connecting easier.
+  console.log("Listening on port", PORT);
+});

@@ -10,8 +10,8 @@
   "author": "J.D. Zamfirescu <zamfire@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "mime": "^2.4.0",
-    "serialport": "^8.0.6",
-    "websocket": "^1.0.28"
+    "mime": "^3.0.0",
+    "serialport": "^12.0.0",
+    "websocket": "^1.0.34"
   }
 }

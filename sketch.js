@@ -73,7 +73,14 @@ function mousePressed() {
   }
   // ...center of the LFT button
   if (dist(mouseX, mouseY, width/2 - BUTTON_SIZE, BUTTON_SIZE*2) < BUTTON_SIZE) {
-    // ... etc
+    sendMessage("left");
   }
-  // other buttons here!
+  // ...center of the RHT button
+  if (dist(mouseX, mouseY, width/2 + BUTTON_SIZE, BUTTON_SIZE*2) < BUTTON_SIZE) {
+    sendMessage("right");
+  }
+  // ...center of the BCK button
+  if (dist(mouseX, mouseY, width/2, BUTTON_SIZE*3) < BUTTON_SIZE) {
+    sendMessage("backward");
+  }
 }

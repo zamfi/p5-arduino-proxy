@@ -1,7 +1,12 @@
 var socket;
 
+var y = 10;
+var x = 0;
+var led = false;
+
 function setup() {
   createCanvas(400, 200);
+  background(255);
   // make a websocket connection to the server we loaded this page from.
   socket = new WebSocket(`ws://${window.location.host}/comm`);
     
@@ -14,11 +19,8 @@ function setup() {
   // to handle it.
   socket.addEventListener('message', message => {
     handleMessage(message);
-  });
-  
+  }); 
 }
-
-var shade = 220;
 
 function handleMessage(message) {
   console.log("Message:", message.data);
@@ -28,7 +30,7 @@ function handleMessage(message) {
   
   if (! isNaN(num)) {
     // if it *isn't* NaN ("Not a Number"), set the shade:
-    shade = num;
+    y = num;
   }
 }
   
@@ -37,50 +39,24 @@ function sendMessage(message) {
   socket.send(message);
 }
 
-const BUTTON_SIZE = 35;
-const TEXT_SIZE = 13;
 
 function draw() {
-  // draw the button borders
-  fill(220);
-  stroke(0);
-  ellipse(width/2, BUTTON_SIZE, BUTTON_SIZE);
-  ellipse(width/2 - BUTTON_SIZE, BUTTON_SIZE*2, BUTTON_SIZE);
-  ellipse(width/2 + BUTTON_SIZE, BUTTON_SIZE*2, BUTTON_SIZE);
-  ellipse(width/2, BUTTON_SIZE*3, BUTTON_SIZE);
-
-  // draw the button text
-  fill(0);
-  noStroke();
-  textAlign(CENTER, CENTER);
-  textSize(TEXT_SIZE);
-  text("FWD", width/2, BUTTON_SIZE);
-  text("LFT", width/2 - BUTTON_SIZE, BUTTON_SIZE*2);
-  text("RHT", width/2 + BUTTON_SIZE, BUTTON_SIZE*2);
-  text("BCK", width/2, BUTTON_SIZE*3);
-
-  // draw the shaded rectangle
-  rectMode(CENTER);
-  fill(shade);
-  stroke(shade);
-  rect(width/2, height*3/4, width/2, BUTTON_SIZE);
+  // draw the increasing y axis value as a line
+  set(x, y, color(0));
+  updatePixels();
+  
+  x += 1;
+  if (x > width) {
+    x = 0;
+  }
 }
 
 function mousePressed() {
-  // is the click within BUTTON_SIZE pixels of the center of the FWD button?
-  if (dist(mouseX, mouseY, width/2, BUTTON_SIZE) < BUTTON_SIZE) {
-    sendMessage("forward");
-  }
-  // ...center of the LFT button
-  if (dist(mouseX, mouseY, width/2 - BUTTON_SIZE, BUTTON_SIZE*2) < BUTTON_SIZE) {
-    sendMessage("left");
-  }
-  // ...center of the RHT button
-  if (dist(mouseX, mouseY, width/2 + BUTTON_SIZE, BUTTON_SIZE*2) < BUTTON_SIZE) {
-    sendMessage("right");
-  }
-  // ...center of the BCK button
-  if (dist(mouseX, mouseY, width/2, BUTTON_SIZE*3) < BUTTON_SIZE) {
-    sendMessage("backward");
+  if (led) {
+    sendMessage("off");
+    led = false;
+  } else {
+    sendMessage("on");
+    led = true;
   }
 }
